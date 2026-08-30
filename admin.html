@@ -4,19 +4,21 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Cinema Admin</title>
+<title>Admin Dashboard</title>
 
 <style>
+
+*{
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+}
 
 body{
   margin:0;
   background:#0d0d0d;
   color:white;
-  font-family:Arial,sans-serif;
 }
 
 .header{
@@ -26,53 +28,88 @@ body{
 }
 
 .container{
-  width:92%;
-  max-width:600px;
+  width:95%;
+  max-width:1100px;
   margin:20px auto;
 }
 
-.status{
-  background:#1c1c1c;
-  padding:15px;
-  border-radius:12px;
-  text-align:center;
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
   margin-bottom:20px;
 }
 
-.booking{
+.stat{
   background:#1c1c1c;
-  padding:18px;
+  padding:20px;
   border-radius:12px;
-  margin-bottom:15px;
-  border-left:4px solid #e50914;
+  text-align:center;
 }
 
-.booking h3{
-  margin-top:0;
-  color:#e50914;
+.stat h2{
+  margin:5px 0;
+  color:#00c853;
 }
 
-button{
+.table-box{
+  background:#1c1c1c;
+  padding:15px;
+  border-radius:12px;
+  overflow-x:auto;
+}
+
+table{
   width:100%;
-  padding:14px;
-  border:0;
-  border-radius:8px;
+  border-collapse:collapse;
+  min-width:900px;
+}
+
+th,
+td{
+  padding:12px;
+  border-bottom:1px solid #333;
+  text-align:left;
+}
+
+th{
+  background:#e50914;
+}
+
+tr:hover{
+  background:#292929;
+}
+
+.empty{
+  text-align:center;
+  padding:30px;
+  color:#aaa;
+}
+
+.refresh{
   background:#e50914;
   color:white;
-  font-size:16px;
+  border:0;
+  padding:12px 20px;
+  border-radius:8px;
   font-weight:bold;
+  cursor:pointer;
+  margin-bottom:15px;
 }
 
 </style>
 
 </head>
 
+
 <body>
 
 
 <div class="header">
 
-<h1>🎬 CINEMA ADMIN</h1>
+<h1>🎬 CINEMA ADMIN DASHBOARD</h1>
+
+<p>Live Booking Management</p>
 
 </div>
 
@@ -80,25 +117,109 @@ button{
 <div class="container">
 
 
-<div class="status">
+<!-- STATS -->
 
-🔔 Booking Notifications
+<div class="stats">
 
-<p id="status">
-Connecting to Firebase...
-</p>
+<div class="stat">
 
-<button
-onclick="enableNotifications()">
+<p>🎟️ Total Bookings</p>
 
-🔔 Enable Notifications
-
-</button>
+<h2 id="totalBookings">
+0
+</h2>
 
 </div>
 
 
-<div id="bookings">
+<div class="stat">
+
+<p>💺 Total Tickets</p>
+
+<h2 id="totalTickets">
+0
+</h2>
+
+</div>
+
+
+<div class="stat">
+
+<p>💰 Total Revenue</p>
+
+<h2>
+₹<span id="totalRevenue">0</span>
+</h2>
+
+</div>
+
+</div>
+
+
+<button
+class="refresh"
+onclick="location.reload()">
+
+🔄 Refresh
+
+</button>
+
+
+<!-- BOOKINGS -->
+
+<div class="table-box">
+
+<h2>
+📋 All Bookings
+</h2>
+
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Booking ID</th>
+
+<th>Name</th>
+
+<th>Mobile</th>
+
+<th>Movie</th>
+
+<th>Date</th>
+
+<th>Time</th>
+
+<th>Seats</th>
+
+<th>Payment</th>
+
+<th>Total</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="bookingTable">
+
+<tr>
+
+<td
+colspan="9"
+class="empty">
+
+Loading bookings...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
 
 </div>
 
@@ -114,6 +235,7 @@ onclick="enableNotifications()">
 import {
   initializeApp
 }
+
 from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
 
@@ -121,13 +243,14 @@ from
 import {
   getDatabase,
   ref,
-  onChildAdded
+  onValue
 }
+
 from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
 
-/* CONFIG */
+/* FIREBASE CONFIG */
 
 const firebaseConfig = {
 
@@ -164,149 +287,196 @@ const db =
 getDatabase(app);
 
 
-/* NOTIFICATION */
-
-window.enableNotifications =
-async function(){
-
-if(!("Notification" in window)){
-
-alert(
-"❌ Notifications supported नाहीत."
-);
-
-return;
-
-}
-
-const permission =
-await Notification.requestPermission();
-
-if(permission === "granted"){
-
-document.getElementById("status")
-.innerText =
-"✅ Notifications Enabled";
-
-}else{
-
-document.getElementById("status")
-.innerText =
-"❌ Permission Denied";
-
-}
-
-};
-
-
 /* BOOKINGS */
 
 const bookingsRef =
 ref(db,"bookings");
 
 
-onChildAdded(
-bookingsRef,
-(snapshot)=>{
+onValue(
 
-const booking =
+bookingsRef,
+
+function(snapshot){
+
+const data =
 snapshot.val();
 
-showBooking(booking);
-
-}
-
+const table =
+document.getElementById(
+"bookingTable"
 );
 
 
-/* SHOW BOOKING */
-
-function showBooking(booking){
-
-const box =
-document.createElement("div");
-
-box.className =
-"booking";
+table.innerHTML = "";
 
 
-box.innerHTML = `
+if(!data){
 
-<h3>🎟️ New Booking</h3>
+table.innerHTML = `
 
-<p>
-<b>Booking ID:</b>
-${booking.bookingID || ""}
-</p>
+<tr>
 
-<p>
-<b>Name:</b>
-${booking.name || ""}
-</p>
+<td
+colspan="9"
+class="empty">
 
-<p>
-<b>Mobile:</b>
-${booking.mobile || ""}
-</p>
+😔 No bookings yet
 
-<p>
-<b>Movie:</b>
-${booking.movie || ""}
-</p>
+</td>
 
-<p>
-<b>Date:</b>
-${booking.date || ""}
-</p>
+</tr>
 
-<p>
-<b>Time:</b>
-${booking.time || ""}
-</p>
+`;
 
-<p>
-<b>Seats:</b>
-${(booking.seats || []).join(", ")}
-</p>
+document.getElementById(
+"totalBookings"
+).innerText = "0";
 
-<p>
-<b>Payment:</b>
-${booking.paymentMethod || ""}
-</p>
+document.getElementById(
+"totalTickets"
+).innerText = "0";
 
-<p>
-<b>Total:</b>
+document.getElementById(
+"totalRevenue"
+).innerText = "0";
+
+return;
+
+}
+
+
+/* VARIABLES */
+
+let bookingCount = 0;
+
+let ticketCount = 0;
+
+let revenue = 0;
+
+
+/* LOOP */
+
+Object.values(data)
+
+.reverse()
+
+.forEach(
+
+function(booking){
+
+bookingCount++;
+
+
+/* SEATS */
+
+let seats = "";
+
+
+if(
+Array.isArray(
+booking.seats
+)
+){
+
+seats =
+booking.seats.join(", ");
+
+ticketCount +=
+booking.seats.length;
+
+}
+
+
+/* REVENUE */
+
+revenue +=
+Number(
+booking.totalAmount || 0
+);
+
+
+/* ROW */
+
+const row =
+document.createElement(
+"tr"
+);
+
+
+row.innerHTML = `
+
+<td>
+<b>${booking.bookingID || "-"}</b>
+</td>
+
+<td>
+${booking.name || "-"}
+</td>
+
+<td>
+${booking.mobile || "-"}
+</td>
+
+<td>
+${booking.movie || "-"}
+</td>
+
+<td>
+${booking.date || "-"}
+</td>
+
+<td>
+${booking.time || "-"}
+</td>
+
+<td>
+${seats || "-"}
+</td>
+
+<td>
+${booking.paymentMethod || "-"}
+</td>
+
+<td>
 ₹${booking.totalAmount || 0}
-</p>
+</td>
 
 `;
 
 
-document
-.getElementById("bookings")
-.prepend(box);
-
-
-/* PHONE NOTIFICATION */
-
-if(
-Notification.permission === "granted"
-){
-
-new Notification(
-"🎟️ New Cinema Booking",
-{
-
-body:
-`${booking.name} booked ${booking.movie} | Seats: ${(booking.seats || []).join(", ")} | ₹${booking.totalAmount || 0}`
+table.appendChild(
+row
+);
 
 }
 
 );
 
-}
+
+/* STATS */
+
+document.getElementById(
+"totalBookings"
+).innerText =
+bookingCount;
+
+
+document.getElementById(
+"totalTickets"
+).innerText =
+ticketCount;
+
+
+document.getElementById(
+"totalRevenue"
+).innerText =
+revenue;
 
 }
+
+);
+
 
 </script>
 
