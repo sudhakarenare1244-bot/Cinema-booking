@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Cinema Admin</title>
+
+<style>
+
+body{
+  margin:0;
+  background:#0d0d0d;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+
+.header{
+  background:#e50914;
+  padding:20px;
+  text-align:center;
+}
+
+.container{
+  width:92%;
+  max-width:600px;
+  margin:20px auto;
+}
+
+.status{
+  background:#1c1c1c;
+  padding:15px;
+  border-radius:12px;
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.booking{
+  background:#1c1c1c;
+  padding:18px;
+  border-radius:12px;
+  margin-bottom:15px;
+  border-left:4px solid #e50914;
+}
+
+.booking h3{
+  margin-top:0;
+  color:#e50914;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:0;
+  border-radius:8px;
+  background:#e50914;
+  color:white;
+  font-size:16px;
+  font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<div class="header">
+
+<h1>🎬 CINEMA ADMIN</h1>
+
+</div>
+
+
+<div class="container">
+
+
+<div class="status">
+
+🔔 Booking Notifications
+
+<p id="status">
+Connecting to Firebase...
+</p>
+
+<button
+onclick="enableNotifications()">
+
+🔔 Enable Notifications
+
+</button>
+
+</div>
+
+
+<div id="bookings">
+
+</div>
+
+
+</div>
+
+
+<script type="module">
+
+
+/* FIREBASE */
+
+import {
+  initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+
+import {
+  getDatabase,
+  ref,
+  onChildAdded
+}
+from
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+
+/* CONFIG */
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyAJ6qXw16K4QrwTVv70jrFw22_rFfTWqYQ",
+
+authDomain:
+"cinema-booking-5ea96.firebaseapp.com",
+
+projectId:
+"cinema-booking-5ea96",
+
+storageBucket:
+"cinema-booking-5ea96.firebasestorage.app",
+
+messagingSenderId:
+"96605927647",
+
+appId:
+"1:96605927647:web:f34088f3aac0a11300916a",
+
+measurementId:
+"G-J4C95WV53G"
+
+};
+
+
+/* INITIALIZE */
+
+const app =
+initializeApp(firebaseConfig);
+
+const db =
+getDatabase(app);
+
+
+/* NOTIFICATION */
+
+window.enableNotifications =
+async function(){
+
+if(!("Notification" in window)){
+
+alert(
+"❌ Notifications supported नाहीत."
+);
+
+return;
+
+}
+
+const permission =
+await Notification.requestPermission();
+
+if(permission === "granted"){
+
+document.getElementById("status")
+.innerText =
+"✅ Notifications Enabled";
+
+}else{
+
+document.getElementById("status")
+.innerText =
+"❌ Permission Denied";
+
+}
+
+};
+
+
+/* BOOKINGS */
+
+const bookingsRef =
+ref(db,"bookings");
+
+
+onChildAdded(
+bookingsRef,
+(snapshot)=>{
+
+const booking =
+snapshot.val();
+
+showBooking(booking);
+
+}
+
+);
+
+
+/* SHOW BOOKING */
+
+function showBooking(booking){
+
+const box =
+document.createElement("div");
+
+box.className =
+"booking";
+
+
+box.innerHTML = `
+
+<h3>🎟️ New Booking</h3>
+
+<p>
+<b>Booking ID:</b>
+${booking.bookingID || ""}
+</p>
+
+<p>
+<b>Name:</b>
+${booking.name || ""}
+</p>
+
+<p>
+<b>Mobile:</b>
+${booking.mobile || ""}
+</p>
+
+<p>
+<b>Movie:</b>
+${booking.movie || ""}
+</p>
+
+<p>
+<b>Date:</b>
+${booking.date || ""}
+</p>
+
+<p>
+<b>Time:</b>
+${booking.time || ""}
+</p>
+
+<p>
+<b>Seats:</b>
+${(booking.seats || []).join(", ")}
+</p>
+
+<p>
+<b>Payment:</b>
+${booking.paymentMethod || ""}
+</p>
+
+<p>
+<b>Total:</b>
+₹${booking.totalAmount || 0}
+</p>
+
+`;
+
+
+document
+.getElementById("bookings")
+.prepend(box);
+
+
+/* PHONE NOTIFICATION */
+
+if(
+Notification.permission === "granted"
+){
+
+new Notification(
+"🎟️ New Cinema Booking",
+{
+
+body:
+`${booking.name} booked ${booking.movie} | Seats: ${(booking.seats || []).join(", ")} | ₹${booking.totalAmount || 0}`
+
+}
+
+);
+
+}
+
+}
+
+</script>
+
+
+</body>
+
+</html>
