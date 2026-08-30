@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Cinema Booking</title>
+
+
+<style>
+
+*{
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+}
+
+body{
+  margin:0;
+  background:#0d0d0d;
+  color:white;
+}
+
+.header{
+  background:#e50914;
+  padding:20px;
+  text-align:center;
+}
+
+.header h1{
+  margin:0;
+  font-size:25px;
+}
+
+.container{
+  width:92%;
+  max-width:600px;
+  margin:20px auto;
+}
+
+.box{
+  background:#1c1c1c;
+  padding:20px;
+  border-radius:15px;
+  margin-bottom:18px;
+}
+
+label{
+  display:block;
+  margin:10px 0 6px;
+}
+
+input,
+select{
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:8px;
+  background:#333;
+  color:white;
+  font-size:15px;
+}
+
+input[type="radio"]{
+  width:auto;
+  margin-right:8px;
+}
+
+.screen{
+  background:white;
+  color:black;
+  text-align:center;
+  padding:10px;
+  margin:20px auto;
+  width:85%;
+  border-radius:50% 50% 0 0;
+}
+
+.seats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+
+.seat{
+  background:#444;
+  padding:12px 5px;
+  text-align:center;
+  border-radius:6px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.seat.selected{
+  background:#00c853;
+}
+
+.seat.booked{
+  background:#e50914;
+  cursor:not-allowed;
+}
+
+button{
+  width:100%;
+  padding:15px;
+  border:0;
+  border-radius:8px;
+  background:#e50914;
+  color:white;
+  font-size:17px;
+  font-weight:bold;
+  margin-top:15px;
+  cursor:pointer;
+}
+
+button:active{
+  transform:scale(0.98);
+}
+
+#notificationBtn{
+  background:#333;
+}
+
+.ticket{
+  display:none;
+  background:white;
+  color:black;
+  padding:20px;
+  border-radius:15px;
+}
+
+.ticket h2{
+  color:#e50914;
+  text-align:center;
+}
+
+.success{
+  color:#00a844;
+  text-align:center;
+  font-weight:bold;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- HEADER -->
+
+<div class="header">
+
+  <h1>🎬 CINEMA BOOKING</h1>
+
+</div>
+
+
+<div class="container">
+
+
+<!-- MOVIE -->
+
+<div class="box">
+
+  <h2>🎥 Movie</h2>
+
+
+  <label>Movie</label>
+
+  <select id="movie">
+
+    <option value="Avengers: Endgame">
+      Avengers: Endgame - ₹180
+    </option>
+
+    <option value="KGF Chapter 2">
+      KGF Chapter 2 - ₹170
+    </option>
+
+    <option value="Pushpa 2">
+      Pushpa 2 - ₹200
+    </option>
+
+    <option value="3 Idiots">
+      3 Idiots - ₹150
+    </option>
+
+  </select>
+
+
+  <label>Date</label>
+
+  <input
+    type="date"
+    id="date"
+  >
+
+
+  <label>Show Time</label>
+
+  <select id="time">
+
+    <option>10:00 AM</option>
+
+    <option>01:00 PM</option>
+
+    <option>04:00 PM</option>
+
+    <option>07:00 PM</option>
+
+    <option>10:00 PM</option>
+
+  </select>
+
+</div>
+
+
+<!-- SEATS -->
+
+<div class="box">
+
+  <h2>💺 Select Seats</h2>
+
+
+  <div class="screen">
+    SCREEN
+  </div>
+
+
+  <div
+    class="seats"
+    id="seats"
+  ></div>
+
+
+  <p>
+    Selected:
+    <span id="selected">
+      None
+    </span>
+  </p>
+
+
+  <p>
+    Total: ₹
+    <span id="total">
+      0
+    </span>
+  </p>
+
+</div>
+
+
+<!-- CUSTOMER -->
+
+<div class="box">
+
+  <h2>👤 Customer Details</h2>
+
+
+  <label>Name</label>
+
+  <input
+    type="text"
+    id="name"
+    placeholder="Enter name"
+  >
+
+
+  <label>Mobile</label>
+
+  <input
+    type="tel"
+    id="mobile"
+    placeholder="Enter mobile"
+  >
+
+</div>
+
+
+<!-- PAYMENT -->
+
+<div class="box">
+
+  <h2>💳 Payment</h2>
+
+
+  <label>
+
+    <input
+      type="radio"
+      name="payment"
+      value="UPI"
+    >
+
+    UPI
+
+  </label>
+
+
+  <label>
+
+    <input
+      type="radio"
+      name="payment"
+      value="Card"
+    >
+
+    Debit / Credit Card
+
+  </label>
+
+
+  <label>
+
+    <input
+      type="radio"
+      name="payment"
+      value="Cash"
+    >
+
+    Pay at Counter
+
+  </label>
+
+
+  <button
+    onclick="bookTicket()"
+  >
+
+    🎟️ BOOK TICKET
+
+  </button>
+
+
+  <button
+    id="notificationBtn"
+    onclick="enableNotifications()"
+  >
+
+    🔔 Enable Notifications
+
+  </button>
+
+</div>
+
+
+<!-- TICKET -->
+
+<div
+  class="ticket"
+  id="ticket"
+>
+
+  <h2>
+    🎟️ BOOKING CONFIRMED
+  </h2>
+
+
+  <p class="success">
+    ✓ Ticket Booked Successfully
+  </p>
+
+
+  <hr>
+
+
+  <p>
+    <b>Booking ID:</b>
+    <span id="tBooking"></span>
+  </p>
+
+
+  <p>
+    <b>Name:</b>
+    <span id="tName"></span>
+  </p>
+
+
+  <p>
+    <b>Mobile:</b>
+    <span id="tMobile"></span>
+  </p>
+
+
+  <p>
+    <b>Movie:</b>
+    <span id="tMovie"></span>
+  </p>
+
+
+  <p>
+    <b>Date:</b>
+    <span id="tDate"></span>
+  </p>
+
+
+  <p>
+    <b>Time:</b>
+    <span id="tTime"></span>
+  </p>
+
+
+  <p>
+    <b>Seats:</b>
+    <span id="tSeats"></span>
+  </p>
+
+
+  <p>
+    <b>Payment:</b>
+    <span id="tPayment"></span>
+  </p>
+
+
+  <p>
+    <b>Total:</b>
+    ₹<span id="tTotal"></span>
+  </p>
+
+
+  <hr>
+
+
+  <p style="text-align:center">
+
+    🍿 Enjoy Your Movie! 🍿
+
+  </p>
+
+</div>
+
+
+</div>
+
+
+<!-- FIREBASE -->
+
+<script type="module">
+
+
+/*
+========================================
+FIREBASE IMPORTS
+========================================
+*/
+
+
+import {
+
+  initializeApp
+
+}
+
+from
+
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+
+import {
+
+  getDatabase,
+  ref,
+  push,
+  set
+
+}
+
+from
+
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
+
+
+import {
+
+  getMessaging,
+  getToken,
+  onMessage
+
+}
+
+from
+
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-messaging.js";
+
+
+/*
+========================================
+FIREBASE CONFIG
+========================================
+*/
+
+
+const firebaseConfig = {
+
+  apiKey:
+  "AIzaSyAJ6qXw16K4QrwTVv70jrFw22_rFfTWqYQ",
+
+  authDomain:
+  "cinema-booking-5ea96.firebaseapp.com",
+
+  projectId:
+  "cinema-booking-5ea96",
+
+  storageBucket:
+  "cinema-booking-5ea96.firebasestorage.app",
+
+  messagingSenderId:
+  "96605927647",
+
+  appId:
+  "1:96605927647:web:f34088f3aac0a11300916a",
+
+  measurementId:
+  "G-J4C95WV53G"
+
+};
+
+
+/*
+========================================
+INITIALIZE FIREBASE
+========================================
+*/
+
+
+const app =
+  initializeApp(firebaseConfig);
+
+
+const db =
+  getDatabase(app);
+
+
+const messaging =
+  getMessaging(app);
+
+
+/*
+========================================
+VAPID KEY
+========================================
+*/
+
+
+const VAPID_KEY =
+"BBBmSJUpJCfefL2LyJbz6n6wroz_7iieXBmiS-eYpL2FDNMJTpSaBO3-iruPkttED8E1qCXaWESdNqC2L04B7lA";
+
+
+/*
+========================================
+MOVIE PRICES
+========================================
+*/
+
+
+const prices = {
+
+  "Avengers: Endgame":180,
+
+  "KGF Chapter 2":170,
+
+  "Pushpa 2":200,
+
+  "3 Idiots":150
+
+};
+
+
+/*
+========================================
+SEAT SYSTEM
+========================================
+*/
+
+
+let selectedSeats = [];
+
+
+const seatsBox =
+  document.getElementById("seats");
+
+
+for(
+  let i = 1;
+  i <= 40;
+  i++
+){
+
+  const seat =
+    document.createElement("div");
+
+
+  seat.className =
+    "seat";
+
+
+  seat.innerText =
+    "S" + i;
+
+
+  /*
+  DEFAULT BOOKED SEATS
+  */
+
+  if(
+    [4,9,15,22,31].includes(i)
+  ){
+
+    seat.classList.add(
+      "booked"
+    );
+
+  }
+
+
+  /*
+  SELECT SEAT
+  */
+
+  else{
+
+    seat.onclick = function(){
+
+      if(
+        seat.classList.contains(
+          "selected"
+        )
+      ){
+
+        seat.classList.remove(
+          "selected"
+        );
+
+
+        selectedSeats =
+          selectedSeats.filter(
+            function(s){
+
+              return s !== "S" + i;
+
+            }
+          );
+
+      }
+
+      else{
+
+        seat.classList.add(
+          "selected"
+        );
+
+
+        selectedSeats.push(
+          "S" + i
+        );
+
+      }
+
+
+      updateTotal();
+
+    };
+
+  }
+
+
+  seatsBox.appendChild(
+    seat
+  );
+
+}
+
+
+/*
+========================================
+UPDATE TOTAL
+========================================
+*/
+
+
+function updateTotal(){
+
+  const movie =
+    document.getElementById(
+      "movie"
+    ).value;
+
+
+  const total =
+    selectedSeats.length *
+    prices[movie];
+
+
+  document.getElementById(
+    "selected"
+  ).innerText =
+
+    selectedSeats.length > 0
+
+      ? selectedSeats.join(", ")
+
+      : "None";
+
+
+  document.getElementById(
+    "total"
+  ).innerText =
+    total;
+
+}
+
+
+/*
+========================================
+MOVIE CHANGE
+========================================
+*/
+
+
+document
+  .getElementById("movie")
+  .addEventListener(
+    "change",
+    updateTotal
+  );
+
+
+/*
+========================================
+ENABLE NOTIFICATIONS
+========================================
+*/
+
+
+window.enableNotifications =
+async function(){
+
+  try{
+
+
+    /*
+    CHECK NOTIFICATION SUPPORT
+    */
+
+    if(
+      !("Notification" in window)
+    ){
+
+      alert(
+        "❌ या browser मध्ये notifications supported नाहीत."
+      );
+
+      return;
+
+    }
+
+
+    /*
+    REQUEST PERMISSION
+    */
+
+    const permission =
+      await Notification
+        .requestPermission();
+
+
+    if(
+      permission !== "granted"
+    ){
+
+      alert(
+        "❌ Notification permission denied."
+      );
+
+      return;
+
+    }
+
+
+    /*
+    REGISTER SERVICE WORKER
+    */
+
+    const registration =
+      await navigator
+        .serviceWorker
+        .register(
+          "./firebase-messaging-sw.js"
+        );
+
+
+    /*
+    WAIT FOR SERVICE WORKER
+    */
+
+    await navigator
+      .serviceWorker
+      .ready;
+
+
+    /*
+    GET FCM TOKEN
+    */
+
+    const token =
+      await getToken(
+        messaging,
+        {
+
+          vapidKey:
+            VAPID_KEY,
+
+          serviceWorkerRegistration:
+            registration
+
+        }
+      );
+
+
+    if(!token){
+
+      alert(
+        "❌ FCM token मिळाला नाही."
+      );
+
+      return;
+
+    }
+
+
+    console.log(
+      "FCM TOKEN:",
+      token
+    );
+
+
+    /*
+    SAVE TOKEN TO FIREBASE
+    */
+
+    await set(
+
+      ref(
+        db,
+        "adminTokens/" + token
+      ),
+
+      {
+
+        active:true,
+
+        createdAt:
+          new Date()
+            .toISOString()
+
+      }
+
+    );
+
+
+    alert(
+      "🔔 Notifications Enabled!"
+    );
+
+
+    /*
+    BUTTON TEXT CHANGE
+    */
+
+    document
+      .getElementById(
+        "notificationBtn"
+      )
+      .innerText =
+        "✅ Notifications Enabled";
+
+
+  }
+
+
+  catch(error){
+
+    console.error(
+      "Notification Error:",
+      error
+    );
+
+
+    alert(
+      "❌ Notification setup error:\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+/*
+========================================
+FOREGROUND MESSAGE
+========================================
+*/
+
+
+onMessage(
+  messaging,
+
+  function(payload){
+
+    console.log(
+      "Foreground notification:",
+      payload
+    );
+
+
+    const title =
+
+      payload
+        .notification
+        ?.title ||
+
+      "🎟️ New Booking";
+
+
+    const body =
+
+      payload
+        .notification
+        ?.body ||
+
+      "New ticket booking received.";
+
+
+    /*
+    SHOW BROWSER NOTIFICATION
+    */
+
+    if(
+      Notification.permission ===
+      "granted"
+    ){
+
+      new Notification(
+
+        title,
+
+        {
+
+          body:body
+
+        }
+
+      );
+
+    }
+
+  }
+
+);
+
+
+/*
+========================================
+BOOK TICKET
+========================================
+*/
+
+
+window.bookTicket =
+async function(){
+
+
+  /*
+  GET CUSTOMER DATA
+  */
+
+  const name =
+
+    document
+      .getElementById("name")
+      .value
+      .trim();
+
+
+  const mobile =
+
+    document
+      .getElementById("mobile")
+      .value
+      .trim();
+
+
+  const movie =
+
+    document
+      .getElementById("movie")
+      .value;
+
+
+  const date =
+
+    document
+      .getElementById("date")
+      .value;
+
+
+  const time =
+
+    document
+      .getElementById("time")
+      .value;
+
+
+  const payment =
+
+    document.querySelector(
+      'input[name="payment"]:checked'
+    );
+
+
+  /*
+  VALIDATION
+  */
+
+  if(
+    !name ||
+    !mobile ||
+    !date
+  ){
+
+    alert(
+      "❌ Please fill all details!"
+    );
+
+    return;
+
+  }
+
+
+  if(
+    selectedSeats.length === 0
+  ){
+
+    alert(
+      "❌ Please select a seat!"
+    );
+
+    return;
+
+  }
+
+
+  if(!payment){
+
+    alert(
+      "❌ Please select payment method!"
+    );
+
+    return;
+
+  }
+
+
+  /*
+  TOTAL
+  */
+
+  const total =
+
+    selectedSeats.length *
+    prices[movie];
+
+
+  /*
+  BOOKING ID
+  */
+
+  const bookingID =
+
+    "CIN" +
+
+    Math.floor(
+      100000 +
+      Math.random() * 900000
+    );
+
+
+  try{
+
+
+    /*
+    CREATE BOOKING REFERENCE
+    */
+
+    const bookingRef =
+
+      push(
+        ref(
+          db,
+          "bookings"
+        )
+      );
+
+
+    /*
+    SAVE BOOKING
+    */
+
+    await set(
+
+      bookingRef,
+
+      {
+
+        bookingID:
+          bookingID,
+
+        name:
+          name,
+
+        mobile:
+          mobile,
+
+        movie:
+          movie,
+
+        date:
+          date,
+
+        time:
+          time,
+
+        seats:
+          selectedSeats,
+
+        paymentMethod:
+          payment.value,
+
+        totalAmount:
+          total,
+
+        bookingTime:
+          new Date()
+            .toISOString()
+
+      }
+
+    );
+
+
+    /*
+    SHOW TICKET
+    */
+
+
+    document
+      .getElementById(
+        "tBooking"
+      )
+      .innerText =
+        bookingID;
+
+
+    document
+      .getElementById(
+        "tName"
+      )
+      .innerText =
+        name;
+
+
+    document
+      .getElementById(
+        "tMobile"
+      )
+      .innerText =
+        mobile;
+
+
+    document
+      .getElementById(
+        "tMovie"
+      )
+      .innerText =
+        movie;
+
+
+    document
+      .getElementById(
+        "tDate"
+      )
+      .innerText =
+        date;
+
+
+    document
+      .getElementById(
+        "tTime"
+      )
+      .innerText =
+        time;
+
+
+    document
+      .getElementById(
+        "tSeats"
+      )
+      .innerText =
+        selectedSeats.join(", ");
+
+
+    document
+      .getElementById(
+        "tPayment"
+      )
+      .innerText =
+        payment.value;
+
+
+    document
+      .getElementById(
+        "tTotal"
+      )
+      .innerText =
+        total;
+
+
+    /*
+    DISPLAY TICKET
+    */
+
+    document
+      .getElementById(
+        "ticket"
+      )
+      .style.display =
+        "block";
+
+
+    /*
+    SUCCESS
+    */
+
+    alert(
+      "🎟️ Booking Successful!"
+    );
+
+
+    /*
+    SCROLL TO TICKET
+    */
+
+    document
+      .getElementById(
+        "ticket"
+      )
+      .scrollIntoView({
+        behavior:"smooth"
+      });
+
+
+  }
+
+
+  catch(error){
+
+    console.error(
+      "Firebase Error:",
+      error
+    );
+
+
+    alert(
+      "❌ Firebase error:\n" +
+      error.message
+    );
+
+  }
+
+};
+
+
+</script>
+
+</body>
+
+</html>
