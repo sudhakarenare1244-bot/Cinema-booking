@@ -33,6 +33,57 @@ body{
   margin:20px auto;
 }
 
+/* LOGIN */
+
+#loginBox{
+  max-width:400px;
+  margin:60px auto;
+  background:#1c1c1c;
+  padding:25px;
+  border-radius:15px;
+}
+
+#loginBox h2{
+  text-align:center;
+}
+
+input{
+  width:100%;
+  padding:13px;
+  margin:8px 0;
+  border:0;
+  border-radius:8px;
+  background:#333;
+  color:white;
+}
+
+button{
+  border:0;
+  border-radius:8px;
+  padding:12px 18px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.loginBtn{
+  width:100%;
+  background:#e50914;
+  color:white;
+  margin-top:10px;
+}
+
+.logoutBtn{
+  background:#333;
+  color:white;
+  margin-top:10px;
+}
+
+/* DASHBOARD */
+
+#dashboard{
+  display:none;
+}
+
 .stats{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -52,6 +103,17 @@ body{
   color:#00c853;
 }
 
+.searchBox{
+  background:#1c1c1c;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+.searchBox input{
+  margin:0;
+}
+
 .table-box{
   background:#1c1c1c;
   padding:15px;
@@ -62,7 +124,7 @@ body{
 table{
   width:100%;
   border-collapse:collapse;
-  min-width:900px;
+  min-width:1000px;
 }
 
 th,
@@ -80,21 +142,22 @@ tr:hover{
   background:#292929;
 }
 
+.deleteBtn{
+  background:#e50914;
+  color:white;
+  padding:8px 12px;
+}
+
 .empty{
   text-align:center;
   padding:30px;
   color:#aaa;
 }
 
-.refresh{
-  background:#e50914;
-  color:white;
-  border:0;
-  padding:12px 20px;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-  margin-bottom:15px;
+.error{
+  color:#ff5252;
+  text-align:center;
+  margin-top:10px;
 }
 
 </style>
@@ -105,16 +168,67 @@ tr:hover{
 <body>
 
 
+<!-- HEADER -->
+
 <div class="header">
 
-<h1>🎬 CINEMA ADMIN DASHBOARD</h1>
+<h1>🎬 CINEMA ADMIN</h1>
 
-<p>Live Booking Management</p>
+<p>Booking Management System</p>
 
 </div>
 
 
-<div class="container">
+<!-- LOGIN -->
+
+<div
+id="loginBox"
+class="container">
+
+<h2>🔐 Admin Login</h2>
+
+<input
+type="email"
+id="email"
+placeholder="Admin Email"
+>
+
+<input
+type="password"
+id="password"
+placeholder="Password"
+>
+
+<button
+class="loginBtn"
+onclick="adminLogin()">
+
+🔐 LOGIN
+
+</button>
+
+<p
+id="loginError"
+class="error">
+</p>
+
+</div>
+
+
+<!-- DASHBOARD -->
+
+<div
+id="dashboard"
+class="container">
+
+
+<button
+class="logoutBtn"
+onclick="adminLogout()">
+
+🚪 Logout
+
+</button>
 
 
 <!-- STATS -->
@@ -156,16 +270,25 @@ tr:hover{
 </div>
 
 
-<button
-class="refresh"
-onclick="location.reload()">
+<!-- SEARCH -->
 
-🔄 Refresh
+<div class="searchBox">
 
-</button>
+<h3>
+🔎 Search Booking
+</h3>
+
+<input
+type="text"
+id="search"
+placeholder="Search by Booking ID, Name, Mobile or Movie..."
+oninput="searchBookings()"
+>
+
+</div>
 
 
-<!-- BOOKINGS -->
+<!-- TABLE -->
 
 <div class="table-box">
 
@@ -181,22 +304,15 @@ onclick="location.reload()">
 <tr>
 
 <th>Booking ID</th>
-
 <th>Name</th>
-
 <th>Mobile</th>
-
 <th>Movie</th>
-
 <th>Date</th>
-
 <th>Time</th>
-
 <th>Seats</th>
-
 <th>Payment</th>
-
 <th>Total</th>
+<th>Action</th>
 
 </tr>
 
@@ -208,10 +324,10 @@ onclick="location.reload()">
 <tr>
 
 <td
-colspan="9"
+colspan="10"
 class="empty">
 
-Loading bookings...
+Loading...
 
 </td>
 
@@ -230,7 +346,9 @@ Loading bookings...
 <script type="module">
 
 
-/* FIREBASE */
+/* ============================
+   FIREBASE IMPORT
+============================ */
 
 import {
   initializeApp
@@ -243,14 +361,30 @@ from
 import {
   getDatabase,
   ref,
-  onValue
+  onValue,
+  remove
 }
 
 from
 "https://www.gstatic.com/firebasejs/12.18.0/firebase-database.js";
 
 
-/* FIREBASE CONFIG */
+/* AUTH */
+
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+}
+
+from
+"https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
+
+/* ============================
+   FIREBASE CONFIG
+============================ */
 
 const firebaseConfig = {
 
@@ -278,7 +412,9 @@ measurementId:
 };
 
 
-/* INITIALIZE */
+/* ============================
+   INITIALIZE
+============================ */
 
 const app =
 initializeApp(firebaseConfig);
@@ -286,11 +422,150 @@ initializeApp(firebaseConfig);
 const db =
 getDatabase(app);
 
+const auth =
+getAuth(app);
 
-/* BOOKINGS */
+
+/* ============================
+   VARIABLES
+============================ */
+
+let allBookings = {};
+
+
+/* ============================
+   LOGIN
+============================ */
+
+window.adminLogin =
+async function(){
+
+const email =
+document
+.getElementById("email")
+.value
+.trim();
+
+const password =
+document
+.getElementById("password")
+.value;
+
+
+const error =
+document
+.getElementById("loginError");
+
+
+error.innerText = "";
+
+
+if(
+!email ||
+!password
+){
+
+error.innerText =
+"Please enter email and password.";
+
+return;
+
+}
+
+
+try{
+
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+}
+
+catch(e){
+
+console.error(e);
+
+error.innerText =
+"❌ Invalid email or password.";
+
+}
+
+};
+
+
+/* ============================
+   LOGOUT
+============================ */
+
+window.adminLogout =
+async function(){
+
+await signOut(auth);
+
+};
+
+
+/* ============================
+   AUTH STATE
+============================ */
+
+onAuthStateChanged(
+
+auth,
+
+function(user){
+
+const loginBox =
+document.getElementById(
+"loginBox"
+);
+
+const dashboard =
+document.getElementById(
+"dashboard"
+);
+
+
+if(user){
+
+loginBox.style.display =
+"none";
+
+dashboard.style.display =
+"block";
+
+loadBookings();
+
+}
+
+else{
+
+loginBox.style.display =
+"block";
+
+dashboard.style.display =
+"none";
+
+}
+
+}
+
+);
+
+
+/* ============================
+   LOAD BOOKINGS
+============================ */
+
+function loadBookings(){
 
 const bookingsRef =
-ref(db,"bookings");
+ref(
+db,
+"bookings"
+);
 
 
 onValue(
@@ -299,8 +574,28 @@ bookingsRef,
 
 function(snapshot){
 
-const data =
-snapshot.val();
+allBookings =
+snapshot.val() || {};
+
+
+displayBookings(
+allBookings
+);
+
+}
+
+);
+
+}
+
+
+/* ============================
+   DISPLAY BOOKINGS
+============================ */
+
+function displayBookings(
+bookings
+){
 
 const table =
 document.getElementById(
@@ -311,43 +606,6 @@ document.getElementById(
 table.innerHTML = "";
 
 
-if(!data){
-
-table.innerHTML = `
-
-<tr>
-
-<td
-colspan="9"
-class="empty">
-
-😔 No bookings yet
-
-</td>
-
-</tr>
-
-`;
-
-document.getElementById(
-"totalBookings"
-).innerText = "0";
-
-document.getElementById(
-"totalTickets"
-).innerText = "0";
-
-document.getElementById(
-"totalRevenue"
-).innerText = "0";
-
-return;
-
-}
-
-
-/* VARIABLES */
-
 let bookingCount = 0;
 
 let ticketCount = 0;
@@ -355,48 +613,75 @@ let ticketCount = 0;
 let revenue = 0;
 
 
-/* LOOP */
-
-Object.values(data)
-
-.reverse()
-
-.forEach(
-
-function(booking){
-
-bookingCount++;
+const entries =
+Object.entries(bookings)
+.reverse();
 
 
-/* SEATS */
+if(entries.length === 0){
 
-let seats = "";
+table.innerHTML = `
 
+<tr>
 
-if(
-Array.isArray(
-booking.seats
-)
-){
+<td
+colspan="10"
+class="empty">
 
-seats =
-booking.seats.join(", ");
+😔 No bookings yet.
 
-ticketCount +=
-booking.seats.length;
+</td>
+
+</tr>
+
+`;
 
 }
 
 
-/* REVENUE */
+entries.forEach(
+
+function([
+key,
+booking
+]){
+
+bookingCount++;
+
+
+const seats =
+Array.isArray(
+booking.seats
+)
+
+?
+
+booking.seats.join(", ")
+
+:
+
+"-";
+
+
+ticketCount +=
+Array.isArray(
+booking.seats
+)
+
+?
+
+booking.seats.length
+
+:
+
+0;
+
 
 revenue +=
 Number(
 booking.totalAmount || 0
 );
 
-
-/* ROW */
 
 const row =
 document.createElement(
@@ -407,7 +692,9 @@ document.createElement(
 row.innerHTML = `
 
 <td>
-<b>${booking.bookingID || "-"}</b>
+<b>
+${booking.bookingID || "-"}
+</b>
 </td>
 
 <td>
@@ -431,7 +718,7 @@ ${booking.time || "-"}
 </td>
 
 <td>
-${seats || "-"}
+${seats}
 </td>
 
 <td>
@@ -440,6 +727,18 @@ ${booking.paymentMethod || "-"}
 
 <td>
 ₹${booking.totalAmount || 0}
+</td>
+
+<td>
+
+<button
+class="deleteBtn"
+onclick="deleteBooking('${key}')">
+
+🗑️ Delete
+
+</button>
+
 </td>
 
 `;
@@ -475,7 +774,192 @@ revenue;
 
 }
 
+
+/* ============================
+   SEARCH
+============================ */
+
+window.searchBookings =
+function(){
+
+const search =
+document
+.getElementById("search")
+.value
+.toLowerCase()
+.trim();
+
+
+if(!search){
+
+displayBookings(
+allBookings
 );
+
+return;
+
+}
+
+
+const filtered = {};
+
+
+Object.entries(
+allBookings
+)
+.forEach(
+
+function([
+key,
+booking
+]){
+
+const text = (
+
+(booking.bookingID || "") +
+
+" " +
+
+(booking.name || "") +
+
+" " +
+
+(booking.mobile || "") +
+
+" " +
+
+(booking.movie || "") +
+
+" " +
+
+(booking.date || "") +
+
+" " +
+
+(booking.time || "")
+
+).toLowerCase();
+
+
+if(
+text.includes(search)
+){
+
+filtered[key] =
+booking;
+
+}
+
+}
+);
+
+
+displayBookings(
+filtered
+);
+
+};
+
+
+/* ============================
+   DELETE BOOKING
+============================ */
+
+window.deleteBooking =
+async function(key){
+
+const booking =
+allBookings[key];
+
+
+if(!booking){
+
+return;
+
+}
+
+
+const confirmDelete =
+confirm(
+
+"Delete booking " +
+
+(booking.bookingID || "") +
+
+"?\n\nThis action cannot be undone."
+
+);
+
+
+if(!confirmDelete){
+
+return;
+
+}
+
+
+try{
+
+/* DELETE MAIN BOOKING */
+
+await remove(
+ref(
+db,
+"bookings/" +
+key
+)
+);
+
+
+/* DELETE BOOKED SEATS */
+
+if(
+booking.showKey &&
+Array.isArray(
+booking.seats
+)
+){
+
+for(
+const seat
+of booking.seats
+){
+
+await remove(
+
+ref(
+db,
+"showBookings/" +
+booking.showKey +
+"/" +
+seat
+)
+
+);
+
+}
+
+}
+
+
+alert(
+"✅ Booking deleted successfully."
+);
+
+}
+
+catch(error){
+
+console.error(error);
+
+alert(
+"❌ Delete failed:\n" +
+error.message
+);
+
+}
+
+};
 
 
 </script>
@@ -483,4 +967,4 @@ revenue;
 
 </body>
 
-</html>
+  </html>
